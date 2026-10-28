@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>길이재기 형성평가</title>
+<style>
+:root{
+  --bg:#fff8e7; --ink:#2d2a26; --line:#e6d9bd; --brand:#ff8f00; --brand-d:#e65100;
+  --c0:#ef5350; --c1:#42a5f5; --c2:#fbc02d; --c3:#66bb6a; --ok:#2e9e50; --bad:#e04a4a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow:hidden}
+input{user-select:text;-webkit-user-select:text;font-family:inherit}
+button{font-family:inherit;cursor:pointer;border:0;color:inherit}
+.screen{height:100vh;height:100dvh;display:none;flex-direction:column}
+.screen.on{display:flex}
+
+/* ---------- 설정 화면 ---------- */
+#setup{overflow:auto}
+.setup-wrap{width:100%;max-width:1100px;margin:0 auto;padding:3vh 3vw 5vh}
+h1{margin:0;font-size:clamp(30px,6vh,64px);text-align:center}
+.sub{text-align:center;font-size:clamp(15px,2.6vh,28px);margin:.8vh 0 2.4vh;color:#7a6a45}
+.block{background:#fff;border:3px solid var(--line);border-radius:2.2vh;padding:2vh 2vw;margin-bottom:2vh}
+.block h2{margin:0 0 1.4vh;font-size:clamp(18px,3vh,34px)}
+.seg,.chips{display:flex;flex-wrap:wrap;gap:1vw}
+.opt{font-size:clamp(16px,3vh,34px);font-weight:700;padding:1.2vh 2vw;border-radius:2vh;background:#fff;
+  border:.5vh solid var(--line);min-width:7vw}
+.opt.sel{background:var(--brand);color:#fff;border-color:var(--brand-d)}
+.names{display:grid;grid-template-columns:repeat(4,1fr);gap:1vh 1vw;margin-top:1.6vh}
+.names input{font-size:clamp(14px,2.4vh,26px);padding:1vh 1vw;border:3px solid var(--line);border-radius:1.4vh;width:100%}
+.hint{font-size:clamp(13px,2vh,22px);color:#8a7a55;margin:1vh 0 0}
+.start{display:block;width:100%;font-size:clamp(22px,4.4vh,50px);font-weight:800;background:var(--brand);color:#fff;
+  padding:2vh;border-radius:2.4vh;box-shadow:0 .8vh 0 var(--brand-d)}
+
+/* ---------- 문제 화면 ---------- */
+.topbar{display:flex;align-items:center;gap:2vw;padding:1.1vh 2vw;background:#fff;border-bottom:3px solid var(--line)}
+.qno{font-size:3vh;font-weight:800;white-space:nowrap}
+.prog{flex:1;height:1.6vh;background:#f0e6cc;border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--brand);width:0;transition:width .3s}
+.icon{font-size:2.8vh;background:#fff3d1;border-radius:1.2vh;padding:.8vh 1.2vw}
+.qarea{flex:1;min-height:0;display:flex;flex-direction:column;padding:1.4vh 3vw 1vh;gap:1.2vh}
+.qtext{font-size:clamp(20px,4.2vh,56px);font-weight:800;line-height:1.35;text-align:center}
+.fig{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.fig svg{width:100%;height:100%}
+.fig .emoji{font-size:16vh;line-height:1}
+.box{display:inline-block;width:1em;height:1em;border:.12em solid var(--brand);border-radius:.2em;vertical-align:-.12em;background:#fff}
+.choices{display:grid;gap:1.4vw;grid-template-columns:repeat(var(--n),1fr)}
+.cc{display:flex;align-items:center;justify-content:center;gap:1vw;padding:1.6vh 1vw;border-radius:2vh;color:#fff;
+  font-weight:800;font-size:clamp(18px,4.4vh,60px);box-shadow:0 .5vh 0 rgba(0,0,0,.18);text-align:center;line-height:1.2}
+.cc .num{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;border-radius:50%;
+  background:rgba(255,255,255,.35)}
+.c0{background:var(--c0)} .c1{background:var(--c1)} .c2{background:var(--c2);color:#3a2e00} .c3{background:var(--c3)}
+.cc.dim{opacity:.3;filter:grayscale(.6)}
+.cc.right{outline:1vh solid var(--ok);transform:scale(1.04)}
+.cc.right::after{content:'✔';margin-left:.4em}
+.foot{display:flex;align-items:center;gap:2vw;min-height:8.5vh}
+.expl{flex:1;font-size:clamp(15px,2.9vh,38px);font-weight:600;background:#fff;border-radius:1.6vh;
+  padding:1.1vh 1.6vw;border:3px dashed var(--line);visibility:hidden}
+.expl.on{visibility:visible}
+.act{font-size:3.2vh;font-weight:800;background:var(--brand);color:#fff;border-radius:2vh;padding:1.6vh 2.4vw;
+  box-shadow:0 .6vh 0 var(--brand-d);white-space:nowrap}
+
+/* ---------- 참여자 패널 ---------- */
+.players{display:grid;gap:1vw;padding:1.1vh 2vw 1.5vh;background:#fff3d1;border-top:3px solid var(--line)}
+.pl{background:#fff;border-radius:2vh;padding:1vh 1vw;border:.5vh solid #eadcb8;display:flex;flex-direction:column;gap:.8vh;min-width:0}
+.pl.done{border-color:#7cc68b}
+.pl.ok{background:#e9f9ee;border-color:var(--ok)}
+.pl.bad{background:#fdeeee;border-color:var(--bad)}
+.pl-head{display:flex;align-items:center;gap:.8vw;font-weight:800;font-size:2.5vh}
+.badge{padding:.2vh 1vw;border-radius:99px;color:#fff;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat{margin-left:auto;font-size:2.3vh;white-space:nowrap}
+.pl-btns{display:flex;gap:.7vw}
+.ab{flex:1;height:8vh;font-size:4vh;font-weight:800;border-radius:1.6vh;color:#fff;box-shadow:0 .4vh 0 rgba(0,0,0,.2)}
+.players.two .ab{height:6vh;font-size:3.4vh}
+.ab.c2{color:#3a2e00}
+.ab.pop{animation:pop .25s}
+@keyframes pop{50%{transform:scale(.86)}}
+.ab.mine{box-shadow:0 0 0 .6vh #333}
+.ab.right{outline:.7vh solid var(--ok);outline-offset:.2vh}
+.pl.locked .ab{pointer-events:none}
+
+/* ---------- 결과 화면 ---------- */
+#result{overflow:auto}
+.res-wrap{width:100%;max-width:1300px;margin:0 auto;padding:3vh 3vw 5vh}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.4vw;margin:2vh 0}
+.rc{background:#fff;border:3px solid var(--line);border-radius:2.2vh;padding:2vh 1.4vw;text-align:center}
+.rc .em{font-size:6vh}
+.rc .nm{font-weight:800;font-size:clamp(16px,2.8vh,30px)}
+.rc .sc{font-weight:800;font-size:clamp(24px,4.6vh,52px);color:var(--brand-d)}
+.rc .bar{height:1.6vh;border-radius:99px;background:#f0e6cc;overflow:hidden;margin-top:1vh}
+.rc .bar i{display:block;height:100%;background:var(--ok)}
+.review{background:#fff7d6;border:3px dashed #e0b84a;border-radius:2vh;padding:1.6vh 1.6vw;font-size:clamp(15px,2.6vh,28px);margin-bottom:2vh}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:1.6vh;overflow:hidden;font-size:clamp(13px,2.2vh,24px)}
+th,td{padding:.9vh .8vw;border-bottom:2px solid #f0e6cc;text-align:center}
+th{background:#ffe9a8}
+tr.low td{background:#fdeeee}
+.res-btns{display:flex;gap:2vw;margin-top:3vh;justify-content:center;flex-wrap:wrap}
+.res-btns .act{font-size:clamp(16px,3vh,34px)}
+.act.sec{background:#fff;color:var(--brand-d);border:.5vh solid var(--brand);box-shadow:none}
+</style>
+</head>
+<body>
+
+<section id="setup" class="screen on"></section>
+<section id="game" class="screen"></section>
+<section id="result" class="screen"></section>
+
+<script>
+'use strict';
+/* =====================================================
+   길이재기 형성평가 (초등 2학년) - 전자칠판용
+   * 이 파일 하나(index.html)만 있으면 동작합니다. (인터넷 연결 불필요)
+   * 문제를 고치고 싶다면 아래 "문제 만들기" 구역의 gen... 함수를 수정하세요.
+   * 학생 이름·점수는 이 화면(브라우저) 안에서만 쓰이고 어디에도 저장·전송되지 않습니다.
+   ===================================================== */
+
+/* ---------- 도구 함수 ---------- */
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[rnd(0,a.length-1)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hasBatchim=w=>{const c=w.charCodeAt(w.length-1)-0xAC00;return c>=0&&c<=11171&&c%28!==0;};
+const eun=w=>w+(hasBatchim(w)?'은':'는');
+const SYM=['①','②','③','④'];
+const PCOL=['#e57373','#5c9ce6','#e0a800','#4fae66','#a56bc4','#2aa198','#f07f4f','#8d6e63'];
+const BOX='<span class="box"></span>';
+
+/* 보기 만들기: 정답 1개 + 오답(중복 제거) 최대 3개, 섞어서 반환 */
+function build(correct,wrongs){
+  const ct=String(correct),seen=new Set([ct]),w=[];
+  for(const x of wrongs){const t=String(x);if(!seen.has(t)){seen.add(t);w.push(t);if(w.length>=3)break;}}
+  const arr=shuffle([ct,...w]);
+  return {choices:arr,answer:arr.indexOf(ct)};
+}
+
+/* ---------- 그림(SVG) ---------- */
+function objSVG(kind,x1,x2,y,h){
+  if(kind==='pencil'){
+    const tip=50;
+    return `<rect x="${x1}" y="${y}" width="22" height="${h}" rx="6" fill="#f48fb1"/>
+      <rect x="${x1+22}" y="${y}" width="10" height="${h}" fill="#b0bec5"/>
+      <rect x="${x1+32}" y="${y}" width="${x2-tip-x1-32}" height="${h}" fill="#fdd835"/>
+      <polygon points="${x2-tip},${y} ${x2-tip},${y+h} ${x2},${y+h/2}" fill="#f5cba7"/>
+      <polygon points="${x2-14},${y+h/2-7} ${x2-14},${y+h/2+7} ${x2},${y+h/2}" fill="#424242"/>`;
+  }
+  if(kind==='tape'){
+    return `<rect x="${x1}" y="${y+6}" width="${x2-x1}" height="${h-12}" rx="8" fill="#ab47bc"/>
+      <rect x="${x1}" y="${y+12}" width="${x2-x1}" height="6" fill="#fff" opacity=".35"/>`;
+  }
+  const w=x2-x1;
+  return `<rect x="${x1}" y="${y}" width="${w}" height="${h}" rx="8" fill="#26a69a"/>
+    <rect x="${x1+w*0.2}" y="${y}" width="${w*0.6}" height="${h}" fill="#fff" opacity=".85"/>
+    <rect x="${x1+w*0.2}" y="${y+h*0.35}" width="${w*0.6}" height="${h*0.1}" fill="#26a69a"/>
+    <rect x="${x1+w*0.2}" y="${y+h*0.55}" width="${w*0.6}" height="${h*0.1}" fill="#26a69a"/>`;
+}
+function rulerSVG(kind,start,end){
+  const max=Math.min(15,Math.max(10,end+1)),L=70,R=900,u=(R-L)/max,x=v=>L+v*u;
+  let s=`<svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="자와 물건">`;
+  s+=objSVG(kind,x(start),x(end),50,46);
+  [start,end].forEach(v=>{s+=`<line x1="${x(v)}" y1="44" x2="${x(v)}" y2="140" stroke="#e53935" stroke-width="3" stroke-dasharray="8 6"/>`;});
+  s+=`<rect x="20" y="140" width="960" height="100" rx="10" fill="#fff3bf" stroke="#a1887f" stroke-width="4"/>`;
+  for(let v=0;v<=max;v++){
+    s+=`<line x1="${x(v)}" y1="140" x2="${x(v)}" y2="${v%5===0?190:176}" stroke="#4e342e" stroke-width="3"/>`;
+    s+=`<text x="${x(v)}" y="226" font-size="32" font-weight="700" text-anchor="middle" fill="#4e342e">${v}</text>`;
+  }
+  s+=`<text x="950" y="226" font-size="28" font-weight="700" text-anchor="middle" fill="#8d6e63">cm</text></svg>`;
+  return s;
+}
+function barsSVG(items,mode){
+  let s;
+  if(mode==='inline'){
+    const total=items.reduce((a,i)=>a+i.v,0),u=900/total;let x=50;
+    s=`<svg viewBox="0 0 1000 130" xmlns="http://www.w3.org/2000/svg">`;
+    items.forEach(i=>{const w=i.v*u;
+      s+=`<rect x="${x}" y="40" width="${w}" height="60" fill="${i.color}" stroke="#fff" stroke-width="4"/>
+          <text x="${x+w/2}" y="30" font-size="30" font-weight="800" text-anchor="middle" fill="#333">${i.v} cm</text>`;x+=w;});
+    return s+'</svg>';
+  }
+  const max=Math.max(...items.map(i=>i.v)),u=640/max;
+  s=`<svg viewBox="0 0 1000 150" xmlns="http://www.w3.org/2000/svg">`;
+  items.forEach((i,k)=>{const y=10+k*70,w=i.v*u;
+    s+=`<text x="230" y="${y+40}" font-size="32" font-weight="800" text-anchor="end" fill="#333">${i.name}</text>
+        <rect x="245" y="${y}" width="${w}" height="54" rx="8" fill="${i.color}"/>
+        <text x="${245+w+14}" y="${y+40}" font-size="32" font-weight="800" fill="#333">${i.v} cm</text>`;});
+  return s+'</svg>';
+}
+
+/* ---------- 문제 만들기 (여기를 고치면 문제가 바뀝니다) ---------- */
+const UNIT_ITEMS=[ // 알맞은 단위 고르기용
+  {n:'연필',e:'✏️',u:'cm',v:'약 15 cm'},{n:'지우개',e:'📏',u:'cm',v:'약 5 cm'},
+  {n:'클립',e:'📎',u:'cm',v:'약 3 cm'},{n:'젓가락',e:'🥢',u:'cm',v:'약 20 cm'},
+  {n:'버스',e:'🚌',u:'m',v:'약 10 m'},{n:'축구장 긴 쪽',e:'⚽',u:'m',v:'약 100 m'},
+  {n:'기차 한 칸',e:'🚃',u:'m',v:'약 20 m'}
+];
+const EST_ITEMS=[ // 길이 어림하기용 (w = 어울리지 않는 오답)
+  {n:'연필',e:'✏️',u:'cm',v:15,w:[3,50,150]},{n:'지우개',e:'📏',u:'cm',v:5,w:[1,20,50]},
+  {n:'클립',e:'📎',u:'cm',v:3,w:[30,300,100]},{n:'젓가락',e:'🥢',u:'cm',v:20,w:[2,100,200]},
+  {n:'2학년 친구의 키',e:'🧒',u:'cm',v:120,w:[12,1200,20]},
+  {n:'교실 문의 높이',e:'🚪',u:'m',v:2,w:[20,200,50]},{n:'버스의 길이',e:'🚌',u:'m',v:10,w:[1,100,3]},
+  {n:'침대의 길이',e:'🛏️',u:'m',v:2,w:[20,200,50]},{n:'기차 한 칸의 길이',e:'🚃',u:'m',v:20,w:[2,200,5]}
+];
+const emojiFig=e=>`<div class="emoji">${e}</div>`;
+
+function genRuler(){
+  const off=Math.random()<0.4,start=off?rnd(1,4):0,len=rnd(3,off?8:12),end=start+len;
+  const kind=pick(['pencil','tape','crayon']),name={pencil:'연필',tape:'색 테이프',crayon:'크레파스'}[kind];
+  const wrongs=(off?[end,...shuffle([len+1,len-1,len+2,len-2,len+3])]:shuffle([len+1,len-1,len+2,len-2,len+3])).filter(v=>v>0);
+  const b=build(`${len} cm`,wrongs.map(v=>`${v} cm`));
+  return {type:'ruler',key:`r${start}-${len}-${kind}`,
+    prompt:off?`${eun(name)} 눈금 ${start}에서 시작해요.<br>길이는 몇 cm일까요?`:`${eun(name)} 길이가 몇 cm일까요?`,
+    fig:rulerSVG(kind,start,end),...b,
+    expl:off?`눈금 ${start}에서 ${end}까지 ${len}칸이에요. 길이는 ${len} cm! (끝 눈금 ${end}가 길이가 아니에요)`
+            :`0에서 ${end}까지 ${len}칸이에요. 길이는 ${len} cm예요.`};
+}
+function genUnit(){
+  const it=pick(UNIT_ITEMS),arr=shuffle(['cm','m']);
+  return {type:'unit',key:`u-${it.n}`,prompt:`${eun(it.n)} 길이를 잴 때<br>어떤 단위가 알맞을까요?`,
+    fig:emojiFig(it.e),choices:arr,answer:arr.indexOf(it.u),
+    expl:`${eun(it.n)} ${it.v} 정도예요. 그래서 ${it.u}가 알맞아요. (짧은 길이는 cm, 긴 길이는 m)`};
+}
+function genEstimate(){
+  const it=pick(EST_ITEMS),b=build(`${it.v} ${it.u}`,it.w.map(v=>`${v} ${it.u}`));
+  return {type:'estimate',key:`e-${it.n}`,prompt:`${eun(it.n)} 약 몇 ${it.u}일까요?`,
+    fig:emojiFig(it.e),...b,expl:`${eun(it.n)} 약 ${it.v} ${it.u} 정도예요.`};
+}
+function genConvert(){
+  const t=rnd(0,3);
+  if(t===0){const n=rnd(2,9),b=build(n*100,[n*10,n,n*1000,n+100]);
+    return {type:'convert',key:`c0-${n}`,prompt:`${n} m = ${BOX} cm`,fig:null,...b,
+      expl:`1 m = 100 cm 이에요. 그래서 ${n} m = ${n*100} cm예요.`};}
+  if(t===1){const a=rnd(2,9),b=build(a,[a*10,a*100,a+100,1]);
+    return {type:'convert',key:`c1-${a}`,prompt:`${a*100} cm = ${BOX} m`,fig:null,...b,
+      expl:`100 cm = 1 m 이에요. 그래서 ${a*100} cm = ${a} m예요.`};}
+  if(t===2){const a=rnd(1,4),c=rnd(1,9)*10,v=a*100+c,b=build(v,[a*10+c,a*100+c/10,a+c,1000*a+c]);
+    return {type:'convert',key:`c2-${a}-${c}`,prompt:`${a} m ${c} cm = ${BOX} cm`,fig:null,...b,
+      expl:`${a} m = ${a*100} cm 이고, 여기에 ${c} cm를 더하면 ${v} cm예요.`};}
+  const a=rnd(1,4),c=rnd(1,9)*10,v=a*100+c,
+    b=build(`${a} m ${c} cm`,[`${a} m ${c/10} cm`,`${c} m ${a} cm`,`${a} m ${c+10} cm`,`${a} m ${c>=20?c-10:c+20} cm`]);
+  return {type:'convert',key:`c3-${a}-${c}`,prompt:`${v} cm = ${BOX} m ${BOX} cm`,fig:null,...b,
+    expl:`${v} cm = ${a*100} cm + ${c} cm = ${a} m ${c} cm예요.`};
+}
+function fmtLen(v){
+  if(v>=100&&Math.random()<0.6){const m=Math.floor(v/100),c=v%100;return c?`${m} m ${c} cm`:`${m} m`;}
+  return `${v} cm`;
+}
+function genCompare(){
+  let vals;
+  do{vals=[...new Set(Array.from({length:4},()=>rnd(6,50)*5))].sort((a,b)=>a-b);}
+  while(vals.length<4||vals.some((v,i)=>i&&v-vals[i-1]<15));
+  const longest=Math.random()<0.5,pairs=shuffle(vals.map(v=>({v,t:fmtLen(v)})));
+  const target=longest?Math.max(...vals):Math.min(...vals);
+  return {type:'compare',key:`p-${vals.join('-')}-${longest}`,
+    prompt:`가장 ${longest?'긴':'짧은'} 길이는 어느 것일까요?`,fig:null,
+    choices:pairs.map(p=>p.t),answer:pairs.findIndex(p=>p.v===target),
+    expl:`모두 cm로 바꿔서 비교해요: ${pairs.map(p=>p.v+' cm').join(', ')} → 가장 ${longest?'긴':'짧은'} 것은 ${target} cm예요.`};
+}
+function genCalc(){
+  const t=rnd(0,2);
+  if(t===0){const a=rnd(3,15),b=rnd(3,15),s=a+b,bb=build(`${s} cm`,[s+1,s-1,Math.abs(a-b),s+10].map(v=>`${v} cm`));
+    return {type:'calc',key:`s-${a}-${b}`,
+      prompt:`<span style="color:#e53935">빨간 끈</span>은 ${a} cm, <span style="color:#1e88e5">파란 끈</span>은 ${b} cm예요.<br>두 끈을 이어 붙이면 모두 몇 cm일까요?`,
+      fig:barsSVG([{v:a,color:'#ef5350'},{v:b,color:'#42a5f5'}],'inline'),...bb,expl:`${a} + ${b} = ${s} (cm)`};}
+  if(t===1){const a=rnd(8,18),b=rnd(3,a-2),d=a-b,bb=build(`${d} cm`,[a+b,d+1,d-1,d+2].filter(v=>v>0).map(v=>`${v} cm`));
+    return {type:'calc',key:`d-${a}-${b}`,prompt:`연필은 ${a} cm, 지우개는 ${b} cm예요.<br>연필은 지우개보다 몇 cm 더 길까요?`,
+      fig:barsSVG([{name:'연필',v:a,color:'#fdd835'},{name:'지우개',v:b,color:'#f48fb1'}],'stack'),...bb,expl:`${a} - ${b} = ${d} (cm)`};}
+  const a=rnd(10,20),b=rnd(3,a-3),d=a-b,bb=build(`${d} cm`,[a+b,d+1,d-1,d+2].filter(v=>v>0).map(v=>`${v} cm`));
+  return {type:'calc',key:`k-${a}-${b}`,prompt:`${a} cm인 리본에서 ${b} cm를 잘라 냈어요.<br>남은 리본은 몇 cm일까요?`,
+    fig:emojiFig('🎀'),...bb,expl:`${a} - ${b} = ${d} (cm)`};
+}
+const TYPES={
+  ruler:{label:'📏 자로 길이 재기',gen:genRuler},
+  unit:{label:'🔤 알맞은 단위',gen:genUnit},
+  estimate:{label:'🤔 길이 어림',gen:genEstimate},
+  convert:{label:'🔁 m와 cm',gen:genConvert},
+  compare:{label:'⚖️ 길이 비교',gen:genCompare},
+  calc:{label:'➕ 길이의 합과 차',gen:genCalc}
+};
+function makeQuestions(n,types){
+  const used=new Set(),out=[];let bag=[];
+  while(out.length<n){
+    if(!bag.length)bag=shuffle(types);
+    const t=bag.pop();let q,tries=0;
+    do{q=TYPES[t].gen();tries++;}while(used.has(q.key)&&tries<40);
+    used.add(q.key);out.push(q);
+  }
+  return out;
+}
+
+/* ---------- 상태 ---------- */
+const cfg={count:10,players:3,types:new Set(Object.keys(TYPES)),auto:true,names:[]};
+const state={qs:[],qi:0,players:[],phase:'setup',autoT:null};
+const snd={on:true};
+const el={setup:document.getElementById('setup'),game:document.getElementById('game'),result:document.getElementById('result')};
+const cur=()=>state.qs[state.qi];
+function show(n){['setup','game','result'].forEach(k=>el[k].classList.toggle('on',k===n));if(n==='setup')renderSetup();}
+
+/* ---------- 소리 ---------- */
+let ac=null;
+function tone(f,t,d,type='sine',v=.15){
+  if(!snd.on)return;
+  try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain(),T=ac.currentTime+t;
+    o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,T);g.gain.exponentialRampToValueAtTime(.001,T+d);
+    o.connect(g);g.connect(ac.destination);o.start(T);o.stop(T+d+.02);}catch(e){}
+}
+const sound={click:()=>tone(660,0,.08),good:()=>{tone(784,0,.15);tone(1047,.15,.25);},
+  none:()=>tone(240,0,.3,'triangle'),done:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,i*.14,.25));}};
+function refreshSnd(){document.querySelectorAll('.snd-ic').forEach(b=>b.textContent=snd.on?'🔊':'🔇');}
+function toggleFS(){try{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}catch(e){}}
+
+/* ---------- 설정 화면 ---------- */
+function renderSetup(){
+  const c=cfg;
+  el.setup.innerHTML=`<div class="setup-wrap">
+    <h1>📏 길이재기 형성평가</h1>
+    <p class="sub">초등학교 2학년 수학 · 전자칠판용 · 여러 명이 동시에 참여해요</p>
+    <div class="block"><h2>① 문제 수</h2><div class="seg">
+      ${[5,10,15,20].map(n=>`<button class="opt ${c.count===n?'sel':''}" data-act="count" data-v="${n}">${n}문제</button>`).join('')}
+    </div></div>
+    <div class="block"><h2>② 동시에 참여하는 사람 수</h2><div class="seg">
+      ${[1,2,3,4,5,6,7,8].map(n=>`<button class="opt ${c.players===n?'sel':''}" data-act="players" data-v="${n}">${n}명</button>`).join('')}
+    </div>
+    <div class="names">${Array.from({length:c.players},(_,i)=>
+      `<input data-name="${i}" maxlength="8" placeholder="친구 ${i+1}" value="${esc(c.names[i]||'')}">`).join('')}</div>
+    <p class="hint">이름은 비워 두어도 돼요. (입력한 이름은 이 화면에서만 쓰이고 저장되지 않아요)</p></div>
+    <div class="block"><h2>③ 문제 유형 <small style="font-weight:500">(수업 내용에 맞게 고르세요)</small></h2><div class="chips">
+      ${Object.entries(TYPES).map(([k,t])=>`<button class="opt ${c.types.has(k)?'sel':''}" data-act="type" data-v="${k}">${t.label}</button>`).join('')}
+    </div></div>
+    <div class="block"><h2>④ 옵션</h2><div class="chips">
+      <button class="opt ${c.auto?'sel':''}" data-act="auto">${c.auto?'✅':'⬜'} 모두 고르면 자동으로 정답 확인</button>
+      <button class="opt ${snd.on?'sel':''}" data-act="sound">${snd.on?'🔊 효과음 켜짐':'🔇 효과음 꺼짐'}</button>
+      <button class="opt" data-act="fs">⛶ 전체 화면</button>
+    </div></div>
+    <button class="start" data-act="start">▶ 시작하기</button>
+  </div>`;
+}
+
+/* ---------- 게임 ---------- */
+function startGame(){
+  state.qs=makeQuestions(cfg.count,[...cfg.types]);
+  state.players=Array.from({length:cfg.players},(_,i)=>({
+    name:(cfg.names[i]||'').trim()||`친구 ${i+1}`,score:0,cur:null,res:[],pick:[]}));
+  state.qi=0;
+  const n=cfg.players,cols=n<=4?n:Math.ceil(n/2);
+  el.game.innerHTML=`
+    <div class="topbar">
+      <div class="qno" id="qno"></div><div class="prog"><i id="prog"></i></div>
+      <button class="icon snd-ic" data-act="sound"></button>
+      <button class="icon" data-act="fs">⛶</button>
+      <button class="icon" data-act="home">🏠</button>
+    </div>
+    <div class="qarea">
+      <div class="qtext" id="qtext"></div><div class="fig" id="fig"></div><div class="choices" id="choices"></div>
+      <div class="foot"><div class="expl" id="expl"></div><button class="act" id="actBtn" data-act="reveal"></button></div>
+    </div>
+    <div class="players ${n>4?'two':''}" id="players" style="grid-template-columns:repeat(${cols},1fr)"></div>`;
+  refreshSnd();show('game');showQuestion();
+}
+function showQuestion(){
+  const q=cur(),n=state.qs.length;
+  state.phase='answering';clearTimeout(state.autoT);
+  state.players.forEach(p=>p.cur=null);
+  document.getElementById('qno').textContent=`문제 ${state.qi+1} / ${n}`;
+  document.getElementById('prog').style.width=`${state.qi/n*100}%`;
+  document.getElementById('qtext').innerHTML=q.prompt;
+  const fig=document.getElementById('fig');fig.innerHTML=q.fig||'';fig.style.display=q.fig?'flex':'none';
+  const ch=document.getElementById('choices');ch.style.setProperty('--n',q.choices.length);
+  ch.innerHTML=q.choices.map((t,k)=>`<div class="cc c${k}"><span class="num">${SYM[k]}</span><span>${esc(t)}</span></div>`).join('');
+  const ex=document.getElementById('expl');ex.textContent='';ex.classList.remove('on');
+  document.getElementById('players').innerHTML=state.players.map((p,i)=>`
+    <div class="pl" data-p="${i}">
+      <div class="pl-head"><span class="badge" style="background:${PCOL[i]}">${esc(p.name)}</span>
+        <span class="score">⭐ ${p.score}</span><span class="stat">고르는 중…</span></div>
+      <div class="pl-btns">${q.choices.map((_,k)=>`<button class="ab c${k}" data-ans="${i}:${k}">${SYM[k]}</button>`).join('')}</div>
+    </div>`).join('');
+  updateAct();
+}
+function answeredCount(){return state.players.filter(p=>p.cur!==null).length;}
+function updateAct(){
+  const b=document.getElementById('actBtn');
+  if(state.phase==='answering'){b.dataset.act='reveal';b.textContent=`정답 확인 ✅ (${answeredCount()}/${state.players.length})`;}
+  else{b.dataset.act='next';b.textContent=state.qi+1>=state.qs.length?'결과 보기 🏆':'다음 문제 ▶';}
+}
+function updatePanel(i){
+  const p=state.players[i],q=cur(),pl=document.querySelector(`.pl[data-p="${i}"]`),rev=state.phase==='revealed';
+  if(!pl)return;
+  const ok=p.cur===q.answer;
+  pl.classList.toggle('done',!rev&&p.cur!==null);
+  pl.classList.toggle('ok',rev&&ok);pl.classList.toggle('bad',rev&&!ok);pl.classList.toggle('locked',rev);
+  pl.querySelector('.score').textContent='⭐ '+p.score;
+  pl.querySelector('.stat').textContent=rev?(ok?'⭕ 정답!':(p.cur===null?'⏰ 못 골랐어요':'❌ 아쉬워요')):(p.cur===null?'고르는 중…':'✔ 선택 완료');
+  pl.querySelectorAll('.ab').forEach((b,k)=>{b.classList.toggle('right',rev&&k===q.answer);b.classList.toggle('mine',rev&&k===p.cur);});
+}
+function choose(pi,k,btn){
+  const p=state.players[pi];p.cur=k;
+  btn.classList.remove('pop');void btn.offsetWidth;btn.classList.add('pop');
+  sound.click();updatePanel(pi);updateAct();
+  if(cfg.auto&&answeredCount()===state.players.length){
+    clearTimeout(state.autoT);state.autoT=setTimeout(reveal,900);
+  }
+}
+function reveal(){
+  if(state.phase!=='answering')return;
+  state.phase='revealed';clearTimeout(state.autoT);
+  const q=cur();let any=false;
+  state.players.forEach(p=>{const ok=p.cur===q.answer;p.res[state.qi]=ok?1:0;p.pick[state.qi]=p.cur;if(ok){p.score++;any=true;}});
+  document.querySelectorAll('#choices .cc').forEach((c,k)=>{c.classList.toggle('right',k===q.answer);c.classList.toggle('dim',k!==q.answer);});
+  const ex=document.getElementById('expl');ex.textContent='💡 '+q.expl;ex.classList.add('on');
+  state.players.forEach((_,i)=>updatePanel(i));updateAct();
+  document.getElementById('prog').style.width=`${(state.qi+1)/state.qs.length*100}%`;
+  any?sound.good():sound.none();
+}
+function next(){
+  if(state.phase!=='revealed')return;
+  if(state.qi+1>=state.qs.length)return finish();
+  state.qi++;showQuestion();
+}
+
+/* ---------- 결과 ---------- */
+function finish(){
+  const n=state.qs.length,P=state.players;
+  const emo=r=>r>=.9?'🏆':r>=.7?'😊':r>=.5?'🙂':'💪';
+  const rates=state.qs.map((_,i)=>Math.round(P.filter(p=>p.res[i]===1).length/P.length*100));
+  const low=rates.map((r,i)=>r<50?i+1:null).filter(Boolean);
+  el.result.innerHTML=`<div class="res-wrap">
+    <h1>🎉 수고했어요!</h1>
+    <div class="cards">${P.map((p,i)=>`<div class="rc">
+      <div class="em">${emo(p.score/n)}</div><div class="nm" style="color:${PCOL[i]}">${esc(p.name)}</div>
+      <div class="sc">${p.score} / ${n}</div><div class="bar"><i style="width:${p.score/n*100}%"></i></div></div>`).join('')}</div>
+    <div class="review">${low.length
+      ?`📌 정답률이 50% 미만인 문제: <b>${low.join('번, ')}번</b> — 다시 함께 살펴보면 좋아요. (아래 표에서 분홍색 줄)`
+      :'👍 정답률이 50% 미만인 문제가 없어요.'}</div>
+    <table><thead><tr><th>번호</th><th>유형</th><th>정답</th>${P.map(p=>`<th>${esc(p.name)}</th>`).join('')}<th>정답률</th></tr></thead>
+    <tbody>${state.qs.map((q,i)=>`<tr class="${rates[i]<50?'low':''}"><td>${i+1}</td><td>${TYPES[q.type].label}</td>
+      <td>${esc(q.choices[q.answer])}</td>${P.map(p=>`<td>${p.res[i]===1?'⭕':'❌'}</td>`).join('')}<td>${rates[i]}%</td></tr>`).join('')}</tbody></table>
+    <div class="res-btns"><button class="act" data-act="again">🔁 같은 설정으로 다시</button>
+      <button class="act sec" data-act="setup">⚙️ 설정 바꾸기</button></div>
+  </div>`;
+  show('result');sound.done();
+}
+
+/* ---------- 이벤트 ---------- */
+document.addEventListener('pointerdown',e=>{      // 여러 명이 동시에 눌러도 되도록 pointerdown 사용
+  const b=e.target.closest('[data-ans]');
+  if(!b||state.phase!=='answering')return;
+  e.preventDefault();
+  const [pi,k]=b.dataset.ans.split(':').map(Number);
+  choose(pi,k,b);
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const v=b.dataset.v;
+  switch(b.dataset.act){
+    case 'count':cfg.count=+v;renderSetup();break;
+    case 'players':cfg.players=+v;renderSetup();break;
+    case 'type':if(cfg.types.has(v)){if(cfg.types.size>1)cfg.types.delete(v);}else cfg.types.add(v);renderSetup();break;
+    case 'auto':cfg.auto=!cfg.auto;renderSetup();break;
+    case 'sound':snd.on=!snd.on;refreshSnd();if(el.setup.classList.contains('on'))renderSetup();break;
+    case 'fs':toggleFS();break;
+    case 'start':case 'again':startGame();break;
+    case 'reveal':reveal();break;
+    case 'next':next();break;
+    case 'home':if(confirm('처음 화면으로 돌아갈까요?\n지금까지의 기록은 사라져요.'))show('setup');break;
+    case 'setup':show('setup');break;
+  }
+});
+document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.name!==undefined)cfg.names[+e.target.dataset.name]=e.target.value;});
+renderSetup();
+</script>
+</body>
+</html>
